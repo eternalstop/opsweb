@@ -1,0 +1,226 @@
+from django.shortcuts import render
+from django.http import HttpResponse, JsonResponse
+from .models import Idc
+from .serializers import IdcsSerializers
+from rest_framework.renderers import JSONRenderer
+from rest_framework.parsers import JSONParser
+
+
+################################################### version 1.0 #############################################################
+class JSONResponse(HttpResponse):
+	def __init__(self, data, **kwargs):
+		kwargs.setdefault('content_type', 'application/json')
+		content = JSONRenderer().render(data)
+		super(JSONResponse, self).__init__(content=content, **kwargs)
+
+
+# Create your views here.
+def idc_list(request, *args, **kwargs):
+	if request.method == "GET":
+		queryset = Idc.objects.all()
+		serializer = IdcsSerializers(queryset, many=True)
+		return JSONResponse(serializer.data)
+		# content = JSONRenderer().render(serializer.data)
+		# return HttpResponse(content, content_type='application/json')
+	elif request.method == "POST":
+		data = JSONParser().parse(request)
+		serializer = IdcsSerializers(data=data)
+		if serializer.is_valid():
+			serializer.save()
+			# content = JSONRenderer().render(serializer.data)
+			# return HttpResponse(content, content_type='application/json')
+			return JSONResponse(serializer.data)
+
+
+def idc_detail(request, pk, *arge, **kwargs):
+	try:
+		idc = Idc.objects.get(pk=pk)
+	except Idc.DoesNotExist:
+		return HttpResponse(status=404)
+
+	if request.method == 'GET':
+		serializer = IdcsSerializers(idc)
+		return JSONResponse(serializer.data)
+	elif request.method == 'PUT':
+		content = JSONParser().parse(request)
+		serializer = IdcsSerializers(idc, data=content)
+
+		if serializer.is_valid():
+			serializer.save()
+			return JSONResponse(serializer.data)
+		return JSONResponse(serializer.errors, status=400)
+	elif request.method == 'DELETE':
+		idc.delete()
+		return HttpResponse(status=204)
+
+
+####################################################### version 2.0 ####################################################
+from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.response import Response
+
+
+@api_view(["GET", "POST"])
+def idc_list_v2(request, format=None, *args, **kwargs):
+	if request.method == 'GET':
+		queryset = Idc.objects.all()
+		serializer = IdcsSerializers(queryset, many=True)
+		return Response(serializer.data)
+	elif request.method == 'POST':
+		serializer = IdcsSerializers(data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+
+####################################################### version 3.0 ####################################################
+
+
+@api_view(["GET", "PUT", "DELETE"])
+def idc_list_v3(request, pk, fromat=None, *args, **kwargs):
+	try:
+		idc = Idc.objects.get(pk=pk)
+	except Idc.DoesNotExist:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	if request.method == 'GET':
+		serializer = IdcsSerializers(idc)
+		return Response(serializer.data)
+
+	elif request.method == 'PUT':
+		serializer = IdcsSerializers(idc, data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return JSONResponse(serializer.data)
+		return JSONResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	elif request.method == 'DELETE':
+		idc.delete()
+		return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
+
+####################################################### route ####################################################
+from rest_framework.reverse import reverse
+
+@api_view(["GET"])
+def api_root(request, format=None, *args, **kwargs):
+	return Response({
+		"idcs": reverse("idc_list_v2", request=request, format=format)
+	})
+
+
+####################################################### version 4.0 ####################################################
+from rest_framework.views import APIView
+from django.http import Http404
+
+class IdcList(APIView):
+	def get(self, request, format=None):
+		queryset = Idc.objects.all()
+		serializer = IdcsSerializers(queryset, many=True)
+		return Response(serializer.data)
+
+	def post(self, request, format=None):
+		serializer = IdcsSerializers(data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IDCDetail(APIView):
+
+	def get_object(self, pk):
+		try:
+			return Idc.objects.get(pk=pk)
+		except Idc.DoesNotExist:
+			raise Http404
+
+	def get(self, request, pk, format=None):
+		idc = self.get_object(pk)
+		serializer = IdcsSerializers(idc)
+		return Response(serializer.data)
+
+	def put(self, request, pk, format=None):
+		idc = self.get_object(pk)
+		serializer = IdcsSerializers(idc, data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+	def delete(self, request, pk, format=None):
+		idc = self.get_object(pk)
+		idc.delete()
+		return HttpResponse(status=status.HTTP_204_NO_CONTENT)
+
+
+####################################################### version 5.0 ####################################################
+from rest_framework import mixins, generics
+
+
+class IdcList_v5(generics.GenericAPIView,
+                 mixins.ListModelMixin,
+                 mixins.CreateModelMixin):
+
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+
+	def get(self, request, *args, **kwargs):
+		return self.list(request, *args, **kwargs)
+
+	def post(self, request, *args, **kwargs):
+		return self.create(request, *args, **kwargs)
+
+
+class IdcDetail_v3(generics.GenericAPIView,
+                   mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.DestroyModelMixin):
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+
+	def get(self, request, *args, **kwargs):
+		return self.retrieve(request, *args, **kwargs)
+
+	def put(self, request, *args, **kwargs):
+		return self.update(request, *args, **kwargs)
+
+	def delete(self, request, *args, **kwargs):
+		return self.destroy(request, *args, **kwargs)
+
+
+####################################################### version 6.0 ####################################################
+
+
+class IdcList_v6(generics.ListCreateAPIView):
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+
+
+class IdcDetail_v4(generics.RetrieveUpdateDestroyAPIView):
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+
+
+####################################################### version 7.0 ####################################################
+from rest_framework import viewsets
+
+
+class IdcListViewset(viewsets.GenericViewSet,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.DestroyModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.CreateModelMixin,
+                     ):
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+
+
+####################################################### version 8.0 ####################################################
+
+
+class IdcViewset_v8(viewsets.ModelViewSet):
+	queryset = Idc.objects.all()
+	serializer_class = IdcsSerializers
+

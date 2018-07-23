@@ -1,0 +1,40 @@
+from django.conf.urls import url, include
+from idcs import views
+from rest_framework.urlpatterns import format_suffix_patterns
+from rest_framework.routers import DefaultRouter
+
+route = DefaultRouter()
+route.register('idc_list', views.IdcViewset_v8)
+
+# idc_list = views.IdcListViewset.as_view({
+# 	"get": "list",
+# 	"post": "create"
+# })
+#
+#
+# idc_detail = views.IdcListViewset.as_view({
+# 	"get": "retrieve",
+# 	"put": "update",
+# 	"delete": "destroy"
+# })
+
+
+urlpatterns = [
+	url(r'^', include(route.urls)),
+	# url(r'^$', views.api_root, name='default'),
+	# url(r'^idc_list/$', views.idc_list, name='idc_list'),
+	# url(r'^idc_detail/(?P<pk>[0-9]+)/$', views.idc_detail, name='idc_detail'),
+	# url(r'^idc_list_v2/$', views.idc_list_v2, name='idc_list_v2'),
+	# url(r'^idc_list_v3/(?P<pk>[0-9]+)/$', views.idc_list_v3, name='idc_list_v3'),
+	# url(r'^idc_list_v4/$', views.IdcList.as_view(), name='idc_list_v4'),
+	# url(r'^idc_detail_v2/(?P<pk>[0-9]+)/$', views.IDCDetail.as_view(), name='idc_detail_v2'),
+	# url(r'^idc_list_v5/$', views.IdcList_v5.as_view(), name='idc_list_v5'),
+	# url(r'^idc_detail_v3/(?P<pk>[0-9]+)/$', views.IdcDetail_v3.as_view(), name='idc_detail_v3'),
+	# url(r'^idc_list_v6/$', views.IdcList_v6.as_view(), name='idc_list_v6'),
+	# url(r'^idc_detail_v4/(?P<pk>[0-9]+)/$', views.IdcDetail_v4.as_view(), name='idc_detail_v4'),
+	# url(r'^idc_list_v7/$', idc_list, name='idc_list_v7'),
+	# url(r'^idc_detail_v5/(?P<pk>[0-9]+)/$', idc_detail, name='idc_detail_v5'),
+]
+
+# urlpatterns = format_suffix_patterns(urlpatterns)
+
