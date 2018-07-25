@@ -20,6 +20,7 @@ from users.views import UserViewset
 from rest_framework.documentation import include_docs_urls
 from cabinet.views import CabinetViewset
 from manufacturer.views import ManufacturerViewset, ProductModelViewset
+from servers.views import ServerViewset, NetworkDeviceViewset, IPViewset
 
 
 route = DefaultRouter()
@@ -27,7 +28,10 @@ route.register('idcs', IdcViewset, base_name='idcs')
 route.register('users', UserViewset, base_name='users')
 route.register('cabinet', CabinetViewset, base_name='cabinet')
 route.register('manufacturer', ManufacturerViewset, base_name='manufacturer')
-route.register('productmodel', ProductModelViewset,base_name='productmodel')
+route.register('productmodel', ProductModelViewset, base_name='productmodel')
+route.register('servers', ServerViewset, base_name='servers')
+route.register('networkdevice', NetworkDeviceViewset, base_name='networkdevice')
+route.register('IP', IPViewset, base_name='IP')
 
 
 urlpatterns = [

@@ -20,10 +20,10 @@ class ProductModelSerializer(serializers.ModelSerializer):
 		fields = "__all__"
 
 	def validate(self, attrs):
-		manufactorer_obj = attrs["vendor"]
+		manufacturer_obj = attrs["vendor"]
 		model_name = attrs["model_name"]
 		try:
-			manufactorer_obj.producymodel_set.filter(model_name_exact=model_name)
+			manufacturer_obj.producymodel_set.filter(model_name_exact=model_name)
 			raise serializers.ValidationError("该型号已存在")
 		except ProductModel.DoesNotExist:
 			return attrs
